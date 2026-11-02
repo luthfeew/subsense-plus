@@ -1,0 +1,248 @@
+{
+  "tt1457767": {
+    "title": "The Conjuring",
+    "year": "2013",
+    "jumpscares": [
+      {
+        "time": 216,
+        "intensity": "Minor",
+        "description": "Loud bang in house"
+      },
+      {
+        "time": 2226,
+        "intensity": "Minor",
+        "description": "Paintings falling off wall"
+      },
+      {
+        "time": 2560,
+        "intensity": "Major",
+        "description": "Monster on top of closet"
+      },
+      {
+        "time": 3020,
+        "intensity": "Major",
+        "description": "Clap clap in cellar"
+      },
+      {
+        "time": 4739,
+        "intensity": "Major",
+        "description": "Music box reflection lady"
+      },
+      {
+        "time": 5113,
+        "intensity": "Minor",
+        "description": "Child pulled in bed"
+      }
+    ]
+  },
+  "tt1591095": {
+    "title": "Insidious",
+    "year": "2011",
+    "jumpscares": [
+      {
+        "time": 815,
+        "intensity": "Minor",
+        "description": "Ladder cracks in attic"
+      },
+      {
+        "time": 1820,
+        "intensity": "Minor",
+        "description": "Alarm system goes off"
+      },
+      {
+        "time": 2420,
+        "intensity": "Major",
+        "description": "Red-faced demon behind Josh"
+      },
+      {
+        "time": 3280,
+        "intensity": "Major",
+        "description": "Dancing boy appears"
+      },
+      {
+        "time": 5908,
+        "intensity": "Minor",
+        "description": "Final confrontation screamer"
+      }
+    ]
+  },
+  "tt15474916": {
+    "title": "Smile",
+    "year": "2022",
+    "jumpscares": [
+      {
+        "time": 110,
+        "intensity": "Major",
+        "description": "Patient stands up smiling"
+      },
+      {
+        "time": 2340,
+        "intensity": "Minor",
+        "description": "Cat birthday gift box"
+      },
+      {
+        "time": 4150,
+        "intensity": "Major",
+        "description": "Sister's head drops at car window"
+      },
+      {
+        "time": 6438,
+        "intensity": "Major",
+        "description": "Monster rips off face"
+      }
+    ]
+  },
+  "tt26657236": {
+    "title": "Backrooms",
+    "year": "2026",
+    "jumpscares": [
+      {
+        "time": 233,
+        "intensity": "Minor",
+        "description": "Sudden noise in hallway"
+      },
+      {
+        "time": 252,
+        "intensity": "Minor",
+        "description": "Door slams shut"
+      },
+      {
+        "time": 384,
+        "intensity": "Minor",
+        "description": "Figure in distance"
+      },
+      {
+        "time": 2189,
+        "intensity": "Minor",
+        "description": "Loud screech"
+      },
+      {
+        "time": 3116,
+        "intensity": "Minor",
+        "description": "Movement behind wall"
+      },
+      {
+        "time": 3149,
+        "intensity": "Minor",
+        "description": "Flickering entity"
+      },
+      {
+        "time": 3349,
+        "intensity": "Minor",
+        "description": "Ceiling crack"
+      },
+      {
+        "time": 3550,
+        "intensity": "Minor",
+        "description": "Sudden whisper"
+      },
+      {
+        "time": 3597,
+        "intensity": "Minor",
+        "description": "Shadow charges"
+      },
+      {
+        "time": 4325,
+        "intensity": "Major",
+        "description": "Monster lunges forward"
+      },
+      {
+        "time": 4709,
+        "intensity": "Minor",
+        "description": "Alarm blare"
+      },
+      {
+        "time": 5627,
+        "intensity": "Major",
+        "description": "Full entity ambush"
+      },
+      {
+        "time": 5707,
+        "intensity": "Minor",
+        "description": "Final screech"
+      }
+    ]
+  },
+  "tt37281055": {
+    "title": "Buddy",
+    "year": "2026",
+    "jumpscares": [
+      {
+        "time": 1237,
+        "intensity": "Minor",
+        "description": "Scare at 00:20:37"
+      },
+      {
+        "time": 1263,
+        "intensity": "Minor",
+        "description": "Scare at 00:21:03"
+      },
+      {
+        "time": 2698,
+        "intensity": "Minor",
+        "description": "Scare at 00:44:58"
+      },
+      {
+        "time": 4026,
+        "intensity": "Minor",
+        "description": "Scare at 01:07:06"
+      },
+      {
+        "time": 4576,
+        "intensity": "Minor",
+        "description": "Scare at 01:16:16"
+      },
+      {
+        "time": 4604,
+        "intensity": "Minor",
+        "description": "Scare at 01:16:44"
+      },
+      {
+        "time": 4960,
+        "intensity": "Minor",
+        "description": "Scare at 01:22:40"
+      }
+    ]
+  },
+  "tt36893729": {
+    "title": "Ice Cream Man",
+    "year": "2026",
+    "jumpscares": [
+      {
+        "time": 1526,
+        "intensity": "Minor",
+        "description": "Children burst through door at 00:25:26"
+      },
+      {
+        "time": 1994,
+        "intensity": "Minor",
+        "description": "Scare at 00:33:14"
+      },
+      {
+        "time": 2780,
+        "intensity": "Minor",
+        "description": "Scare at 00:46:20"
+      },
+      {
+        "time": 3250,
+        "intensity": "Minor",
+        "description": "Scare at 00:54:10"
+      },
+      {
+        "time": 3515,
+        "intensity": "Minor",
+        "description": "Scare at 00:58:35"
+      },
+      {
+        "time": 3940,
+        "intensity": "Minor",
+        "description": "Scare at 01:05:40"
+      },
+      {
+        "time": 4323,
+        "intensity": "Minor",
+        "description": "Scare at 01:12:03"
+      }
+    ]
+  }
+}

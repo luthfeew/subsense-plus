@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubSense+</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0b0d14, #141724);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .container {
+            background: #111420;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 36px;
+            max-width: 530px;
+            width: 100%;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+        }
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .addon-logo {
+            width: 62px;
+            height: 62px;
+            border-radius: 15px;
+            box-shadow: 0 4px 18px rgba(255, 215, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.12);
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.45;
+            margin-bottom: 0;
+        }
+        .form-group {
+            margin-bottom: 22px;
+        }
+        .label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        .badge-recommended {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 13px 15px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.15);
+        }
+        .status-box {
+            margin-top: 8px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 20px;
+            transition: all 0.2s ease;
+        }
+        .status-box.idle {
+            color: #94a3b8;
+        }
+        .status-box.loading {
+            color: #38bdf8;
+        }
+        .status-box.valid {
+            color: #34d399;
+            font-weight: 600;
+        }
+        .status-box.invalid {
+            color: #f87171;
+            font-weight: 600;
+        }
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(56, 189, 248, 0.3);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .helper-text {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+        .helper-text a.link-subsense {
+            color: #ffd700;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .helper-text a.link-subsense:hover {
+            color: #ffffff;
+        }
+        .btn-install {
+            width: 100%;
+            background: #ffd700;
+            color: #0c0e17;
+            border: none;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 800;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            letter-spacing: 0.3px;
+        }
+        .btn-install:hover {
+            background: #f1cb00;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.25);
+        }
+        .copy-box {
+            margin-top: 20px;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 10px;
+            border: 1px dashed rgba(255, 255, 255, 0.18);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .copy-box:hover {
+            border-color: #ffd700;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 14px rgba(255, 215, 0, 0.1);
+        }
+        .copy-box:focus-visible {
+            outline: 2px solid #ffd700;
+            outline-offset: 2px;
+        }
+        .copy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .copy-header span.title {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .copy-badge {
+            font-size: 11px;
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .copy-badge.copied {
+            background: rgba(16, 185, 129, 0.25);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .copy-url {
+            word-break: break-all;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            color: #ffd700;
+            line-height: 1.4;
+        }
+        .tip-banner {
+            margin-top: 24px;
+            padding: 14px 16px;
+            background: rgba(255, 215, 0, 0.07);
+            border: 1px solid rgba(255, 215, 0, 0.22);
+            border-radius: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+        .tip-banner .tip-icon {
+            font-size: 16px;
+            line-height: 1;
+            margin-top: 1px;
+        }
+        .tip-banner strong {
+            color: #ffd700;
+        }
+        @media (max-width: 540px) {
+            body {
+                padding: 16px 12px;
+            }
+            .container {
+                padding: 24px 18px;
+            }
+            .addon-logo {
+                width: 52px;
+                height: 52px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-row">
+            <img src="/static/logo.png" alt="SubSense+ Logo" class="addon-logo">
+            <div>
+                <h1>SubSense+</h1>
+                <p class="subtitle">Enhanced SubSense subtitles with smart viewing enhancements, jumpscare alerts, and more.</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="label-row">
+                <label for="subsenseUrl">SubSense Manifest URL</label>
+                <span class="badge-recommended">Recommended</span>
+            </div>
+            <div class="input-wrapper">
+                <input type="text" id="subsenseUrl" placeholder="https://subsense.example.com/.../manifest.json" spellcheck="false" autocomplete="off">
+            </div>
+            <div id="validationStatus" class="status-box idle">
+                <span>ℹ️ Recommended to provide your SubSense link so your preferred languages are included.</span>
+            </div>
+            <p class="helper-text">
+                Don't have your SubSense URL yet? <a href="https://subsense.nepiraw.com/" target="_blank" rel="noopener noreferrer" class="link-subsense">Configure SubSense here</a> to choose your languages, then copy its manifest link.
+            </p>
+        </div>
+
+        <div class="form-group">
+            <div class="label-row">
+                <label for="leadTime">Warning Time (Seconds)</label>
+            </div>
+            <input type="number" id="leadTime" min="3" max="15" value="5">
+            <p class="helper-text">How many seconds before a jump scare the warning appears (Default: 5 seconds).</p>
+        </div>
+
+        <div class="form-group">
+            <div class="label-row">
+                <label for="filterType">Alert Filter</label>
+            </div>
+            <select id="filterType">
+                <option value="all">All Jumpscares (Major & Minor)</option>
+                <option value="major">Major Jumpscares Only</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <div class="label-row">
+                <label for="tmdbKey">TMDB API Key</label>
+                <span class="badge-recommended" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">Recommended for WhenJumpScare</span>
+            </div>
+            <div class="input-wrapper">
+                <input type="text" id="tmdbKey" placeholder="e.g. 1a2b3c4d5e6f... (TMDB v3 API Key)" spellcheck="false" autocomplete="off">
+            </div>
+            <div id="tmdbValidationStatus" class="status-box idle">
+                <span>ℹ️ Allows WhenJumpScare to instantly map movies via official TMDB ID (100% precision).</span>
+            </div>
+            <p class="helper-text">
+                Don't have a TMDB key yet? <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" class="link-subsense">Get a free TMDB API Key here</a> (Approved instantly, free forever).
+            </p>
+        </div>
+
+        <button class="btn-install" id="installBtn" onclick="installAddon()">Install to Stremio / Nuvio</button>
+
+        <div class="copy-box" id="copyBox" role="button" tabindex="0" aria-label="Copy manifest URL to clipboard" onclick="copyManifestUrl()" title="Click to copy to clipboard">
+            <div class="copy-header">
+                <span class="title">Manifest URL (for manual setup):</span>
+                <span class="copy-badge" id="copyBadge">📋 Click to Copy</span>
+            </div>
+            <div class="copy-url" id="manifestUrl">Generating link...</div>
+        </div>
+
+        <div class="tip-banner">
+            <span class="tip-icon">💡</span>
+            <div>
+                <strong>Pro Tip:</strong> After installing <em>SubSense+</em>, you can safely <strong>disable or uninstall</strong> the original SubSense addon in Stremio / Nuvio. This keeps your subtitle menu clean and avoids duplicate subtitle tracks.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let debounceTimer = null;
+        let tmdbDebounceTimer = null;
+
+        function cleanSubsenseUrl(url) {
+            if (!url) return '';
+            let cleaned = url.trim();
+            if (cleaned.startsWith('stremio://')) {
+                cleaned = 'https://' + cleaned.slice(10);
+            }
+            cleaned = cleaned.replace(/\/+$/, '');
+            cleaned = cleaned.replace(/\/(manifest\.json|configure)$/i, '');
+            return cleaned.replace(/\/+$/, '');
+        }
+
+        function generateConfigUrl() {
+            const rawSubsense = document.getElementById('subsenseUrl').value.trim();
+            const cleanedSubsense = cleanSubsenseUrl(rawSubsense) || 'default';
+            const subsense = encodeURIComponent(cleanedSubsense);
+            const leadTime = document.getElementById('leadTime').value || '5';
+            const filterType = document.getElementById('filterType').value || 'all';
+            const tmdbKey = document.getElementById('tmdbKey').value.trim();
+
+            const configObj = {
+                subsense: subsense,
+                lead: parseInt(leadTime),
+                filter: filterType
+            };
+            if (tmdbKey) {
+                configObj.tmdb_key = tmdbKey;
+            }
+
+            const configB64 = btoa(JSON.stringify(configObj));
+            const origin = window.location.origin;
+            return `${origin}/${configB64}/manifest.json`;
+        }
+
+        function updateUrl() {
+            document.getElementById('manifestUrl').innerText = generateConfigUrl();
+        }
+
+        async function validateSubsenseUrl() {
+            const raw = document.getElementById('subsenseUrl').value.trim();
+            const statusEl = document.getElementById('validationStatus');
+
+            if (!raw) {
+                statusEl.className = 'status-box idle';
+                statusEl.innerHTML = '<span>ℹ️ Recommended to provide your SubSense link so your preferred languages are included.</span>';
+                return;
+            }
+
+            statusEl.className = 'status-box loading';
+            statusEl.innerHTML = '<span class="spinner"></span> <span>Checking SubSense URL...</span>';
+
+            try {
+                const encoded = encodeURIComponent(raw);
+                const resp = await fetch(`/api/validate-subsense?url=${encoded}`);
+                const data = await resp.json();
+
+                if (data.valid) {
+                    statusEl.className = 'status-box valid';
+                    statusEl.innerHTML = `<span>✅ Valid SubSense Addon found (${data.name || 'Active'})</span>`;
+                } else {
+                    statusEl.className = 'status-box invalid';
+                    statusEl.innerHTML = `<span>❌ ${data.error || 'Invalid or unreachable SubSense URL'}</span>`;
+                }
+            } catch (err) {
+                statusEl.className = 'status-box invalid';
+                statusEl.innerHTML = '<span>⚠️ Could not connect to validation service.</span>';
+            }
+        }
+
+        async function validateTmdbKey() {
+            const raw = document.getElementById('tmdbKey').value.trim();
+            const statusEl = document.getElementById('tmdbValidationStatus');
+
+            if (!raw) {
+                statusEl.className = 'status-box idle';
+                statusEl.innerHTML = '<span>ℹ️ Allows WhenJumpScare to instantly map movies via official TMDB ID (100% precision).</span>';
+                return;
+            }
+
+            statusEl.className = 'status-box loading';
+            statusEl.innerHTML = '<span class="spinner"></span> <span>Checking TMDB API Key...</span>';
+
+            try {
+                const encoded = encodeURIComponent(raw);
+                const resp = await fetch(`/api/validate-tmdb?key=${encoded}`);
+                const data = await resp.json();
+
+                if (data.valid) {
+                    statusEl.className = 'status-box valid';
+                    statusEl.innerHTML = `<span>✅ ${data.message || 'Valid TMDB API Key (Connected)'}</span>`;
+                } else {
+                    statusEl.className = 'status-box invalid';
+                    statusEl.innerHTML = `<span>❌ ${data.error || 'Invalid TMDB API Key'}</span>`;
+                }
+            } catch (err) {
+                statusEl.className = 'status-box invalid';
+                statusEl.innerHTML = '<span>⚠️ Could not connect to validation service.</span>';
+            }
+        }
+
+        async function copyManifestUrl() {
+            const urlText = document.getElementById('manifestUrl').innerText;
+            const badge = document.getElementById('copyBadge');
+
+            if (!urlText || urlText.includes('...')) return;
+
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(urlText);
+                } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = urlText;
+                    textArea.style.position = "fixed";
+                    textArea.style.opacity = "0";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                }
+
+                badge.className = 'copy-badge copied';
+                badge.innerText = '✅ Copied!';
+                setTimeout(() => {
+                    badge.className = 'copy-badge';
+                    badge.innerText = '📋 Click to Copy';
+                }, 2000);
+            } catch (err) {
+                badge.innerText = '❌ Failed to copy';
+                setTimeout(() => {
+                    badge.innerText = '📋 Click to Copy';
+                }, 2000);
+            }
+        }
+
+        document.getElementById('subsenseUrl').addEventListener('input', () => {
+            updateUrl();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(validateSubsenseUrl, 600);
+        });
+
+        document.getElementById('leadTime').addEventListener('input', updateUrl);
+        document.getElementById('filterType').addEventListener('change', updateUrl);
+        document.getElementById('tmdbKey').addEventListener('input', () => {
+            updateUrl();
+            clearTimeout(tmdbDebounceTimer);
+            tmdbDebounceTimer = setTimeout(validateTmdbKey, 600);
+        });
+
+        function installAddon() {
+            const manifestHttpUrl = generateConfigUrl();
+            const stremioProtocolUrl = manifestHttpUrl.replace(/^https?:\/\//, 'stremio://');
+            window.location.href = stremioProtocolUrl;
+        }
+
+        const copyBoxEl = document.getElementById('copyBox');
+        if (copyBoxEl) {
+            copyBoxEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    copyManifestUrl();
+                }
+            });
+        }
+
+        updateUrl();
+    </script>
+</body>
+</html>
