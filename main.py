@@ -340,8 +340,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--port",
         type=int,
-        default=7000,
-        help="Port to run the server on (default: 7000)."
+        default=int(os.environ.get("PORT", 8000)),
+        help="Port to run the server on (default: 8000 or $PORT)."
     )
     parser.add_argument(
         "--host",
