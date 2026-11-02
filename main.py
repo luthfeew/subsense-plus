@@ -46,7 +46,7 @@ DEFAULT_SUBSENSE_BASE = "https://subsense.elfhosted.com"
 
 MANIFEST = {
     "id": "org.subsense.plus",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "name": "SubSense+",
     "description": "Enhanced SubSense subtitles with smart viewing enhancements, jumpscare alerts, and more.",
     "resources": [
