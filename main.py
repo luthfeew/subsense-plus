@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import os
@@ -270,6 +271,12 @@ async def get_subtitles_custom(user_config: str, media_type: str, media_id: str,
 async def get_subtitles_extra_custom(user_config: str, media_type: str, media_id: str, extra: str, request: Request):
     return await handle_subtitles_request(user_config, media_type, media_id, extra, request)
 
+BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "*/*",
+    "Accept-Language": "en-US,en;q=0.9,id;q=0.8",
+}
+
 @app.get("/proxy-sub/{filename}")
 @app.get("/proxy-sub")
 async def proxy_subtitle(
@@ -287,18 +294,24 @@ async def proxy_subtitle(
     actual_sub_url = urllib.parse.unquote(sub_url)
     print(f"[Injector] Downloading subtitle from {actual_sub_url} for IMDb {imdb}...")
 
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+    original_content = None
+    async with httpx.AsyncClient(timeout=8.0, follow_redirects=True, headers=BROWSER_HEADERS) as client:
         try:
             resp = await client.get(actual_sub_url)
-            if resp.status_code != 200:
-                raise HTTPException(status_code=502, detail="Failed to download original subtitle")
-            original_content = resp.text
+            if resp.status_code == 200 and resp.text.strip():
+                original_content = resp.text
+            else:
+                print(f"[Injector] Upstream returned HTTP {resp.status_code}. Seamlessly redirecting client to original subtitle.")
+                return RedirectResponse(url=actual_sub_url, status_code=307)
         except Exception as e:
-            print(f"[Injector] Error fetching original subtitle: {e}")
-            raise HTTPException(status_code=502, detail=str(e))
+            print(f"[Injector] Error fetching original subtitle: {e}. Seamlessly redirecting client to original subtitle.")
+            return RedirectResponse(url=actual_sub_url, status_code=307)
 
     try:
-        jumpscares = await scraper.get_jumpscares_for_id(type, imdb, tmdb_api_key=tmdb_key or None)
+        jumpscares = await asyncio.wait_for(
+            scraper.get_jumpscares_for_id(type, imdb, tmdb_api_key=tmdb_key or None),
+            timeout=4.0
+        )
         if filter == "major":
             jumpscares = [j for j in jumpscares if j.get("intensity", "").lower() == "major"]
 
@@ -309,7 +322,7 @@ async def proxy_subtitle(
             lead_time_seconds=lead
         )
     except Exception as e:
-        print(f"[Injector] Error during warning injection: {e}, falling back to original subtitle.")
+        print(f"[Injector] Error or timeout during warning injection ({e}), serving original subtitle directly.")
         modified_content = original_content
 
     is_vtt = "WEBVTT" in modified_content[:50]
