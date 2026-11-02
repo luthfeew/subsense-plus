@@ -49,13 +49,17 @@ MANIFEST = {
     "name": "SubSense+",
     "description": "Enhanced SubSense subtitles with smart viewing enhancements, jumpscare alerts, and more.",
     "resources": [
-        {
-            "name": "subtitles",
-            "types": ["movie", "series"],
-            "idPrefixes": ["tt"]
-        }
+        "subtitles"
     ],
-    "types": ["movie", "series"],
+    "types": [
+        "movie",
+        "series",
+        "subtitles"
+    ],
+    "idPrefixes": [
+        "tt",
+        "kitsu"
+    ],
     "catalogs": [],
     "behaviorHints": {
         "configurable": True,
@@ -236,20 +240,17 @@ async def handle_subtitles_request(
 
         encoded_url = urllib.parse.quote(orig_url, safe='')
         proxy_url = (
-            f"{host}/proxy-sub?"
+            f"{host}/proxy-sub/{media_id}.srt?"
             f"imdb={media_id}&type={media_type}&lead={lead_time}&filter={filter_type}"
             f"&tmdb_key={urllib.parse.quote(tmdb_key)}"
             f"&sub_url={encoded_url}"
         )
 
-        orig_lang = sub.get("lang", "ind")
-        orig_label = sub.get("label") or orig_lang
-        proxied_subtitles.append({
-            "id": f"subsense-plus-{sub.get('id', 'sub')}",
-            "lang": orig_lang,
-            "label": orig_label,
-            "url": proxy_url
-        })
+        # Preserve ALL original fields from upstream SubSense (fileName, source, releaseName, releases, etc.)
+        proxied_sub = dict(sub)
+        proxied_sub["id"] = f"subsense-plus-{sub.get('id', 'sub')}"
+        proxied_sub["url"] = proxy_url
+        proxied_subtitles.append(proxied_sub)
 
     return {"subtitles": proxied_subtitles}
 
@@ -269,9 +270,11 @@ async def get_subtitles_custom(user_config: str, media_type: str, media_id: str,
 async def get_subtitles_extra_custom(user_config: str, media_type: str, media_id: str, extra: str, request: Request):
     return await handle_subtitles_request(user_config, media_type, media_id, extra, request)
 
+@app.get("/proxy-sub/{filename}")
 @app.get("/proxy-sub")
 async def proxy_subtitle(
     imdb: str,
+    filename: Optional[str] = None,
     type: str = "movie",
     sub_url: str = "",
     lead: float = 5.0,
@@ -294,26 +297,34 @@ async def proxy_subtitle(
             print(f"[Injector] Error fetching original subtitle: {e}")
             raise HTTPException(status_code=502, detail=str(e))
 
-    jumpscares = await scraper.get_jumpscares_for_id(type, imdb, tmdb_api_key=tmdb_key or None)
+    try:
+        jumpscares = await scraper.get_jumpscares_for_id(type, imdb, tmdb_api_key=tmdb_key or None)
+        if filter == "major":
+            jumpscares = [j for j in jumpscares if j.get("intensity", "").lower() == "major"]
 
-    if filter == "major":
-        jumpscares = [j for j in jumpscares if j.get("intensity", "").lower() == "major"]
-
-    print(f"[Injector] Injecting {len(jumpscares)} jumpscare warnings with {lead}s lead time...")
-
-    modified_content = inject_jumpscares(
-        subtitle_content=original_content,
-        jumpscares=jumpscares,
-        lead_time_seconds=lead
-    )
+        print(f"[Injector] Injecting {len(jumpscares)} jumpscare warnings with {lead}s lead time...")
+        modified_content = inject_jumpscares(
+            subtitle_content=original_content,
+            jumpscares=jumpscares,
+            lead_time_seconds=lead
+        )
+    except Exception as e:
+        print(f"[Injector] Error during warning injection: {e}, falling back to original subtitle.")
+        modified_content = original_content
 
     is_vtt = "WEBVTT" in modified_content[:50]
-    media_type = "text/vtt; charset=utf-8" if is_vtt else "text/plain; charset=utf-8"
+    media_type = "text/vtt; charset=utf-8" if is_vtt else "application/x-subrip; charset=utf-8"
+    out_filename = filename or f"{imdb}.srt"
 
     return Response(
         content=modified_content,
         media_type=media_type,
-        headers={"Content-Disposition": "inline"}
+        headers={
+            "Content-Disposition": f'inline; filename="{out_filename}"',
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+            "Access-Control-Allow-Headers": "*"
+        }
     )
 
 if __name__ == "__main__":
