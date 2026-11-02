@@ -89,23 +89,13 @@ In your browser, visit:
 
 ---
 
-## 🌐 Deploy to Cloud (Free 24/7 Hosting)
-To use the addon on Android TV and mobile without needing your PC on:
+## 🌐 Cloud Deployment (24/7 Free Hosting)
 
-### Option A: Render.com (Free)
-1. Push this folder to a GitHub repository.
-2. Go to [render.com](https://render.com) and create a **New Web Service**.
-3. Select your repository and set:
-   * **Runtime:** `Python 3`
-   * **Build Command:** `pip install -r requirements.txt`
-   * **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
-4. Once deployed, copy your Render URL:
-   `https://your-service.onrender.com/manifest.json`
+Addon ini dapat langsung dideploy ke platform cloud gratis seperti **Koyeb**, **Render**, atau **Hugging Face Spaces**.
 
-### Option B: Hugging Face Spaces (Free)
-1. Create a new Space on [huggingface.co/spaces](https://huggingface.co/spaces) with **FastAPI** or **Docker**.
-2. Upload the project files (`main.py`, `injector.py`, `scraper.py`, `requirements.txt`, `templates/`).
-3. Your Space will build and provide a public HTTPS URL.
+### Live Instance (Hosted on Koyeb)
+* **Configuration Web UI:** `https://subsense-plus-tahubulat500-5e903271.apps.mistral.run/configure`
+* **Default Manifest URL:** `https://subsense-plus-tahubulat500-5e903271.apps.mistral.run/manifest.json`
 
 ---
 
