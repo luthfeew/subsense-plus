@@ -46,7 +46,7 @@ DEFAULT_SUBSENSE_BASE = "https://subsense.elfhosted.com"
 
 MANIFEST = {
     "id": "org.subsense.plus",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "name": "SubSense+",
     "description": "Enhanced SubSense subtitles with smart viewing enhancements, jumpscare alerts, and more.",
     "resources": [
@@ -295,7 +295,7 @@ async def proxy_subtitle(
     print(f"[Injector] Downloading subtitle from {actual_sub_url} for IMDb {imdb}...")
 
     original_content = None
-    async with httpx.AsyncClient(timeout=8.0, follow_redirects=True, headers=BROWSER_HEADERS) as client:
+    async with httpx.AsyncClient(timeout=12.0, follow_redirects=True, headers=BROWSER_HEADERS) as client:
         try:
             resp = await client.get(actual_sub_url)
             if resp.status_code == 200 and resp.text.strip():
@@ -310,7 +310,7 @@ async def proxy_subtitle(
     try:
         jumpscares = await asyncio.wait_for(
             scraper.get_jumpscares_for_id(type, imdb, tmdb_api_key=tmdb_key or None),
-            timeout=8.0
+            timeout=12.0
         )
         if filter == "major":
             jumpscares = [j for j in jumpscares if j.get("intensity", "").lower() == "major"]

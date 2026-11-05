@@ -340,6 +340,42 @@ class JumpscareScraper:
         text = re.sub(r'[^a-z0-9]+', '-', text)
         return text.strip('-')
 
+    def _parse_jina_whenjumpscare(self, markdown_text: str) -> List[Dict[str, Any]]:
+        """
+        Parses WhenJumpScare markdown provided by Jina AI Reader (used to bypass Cloudflare).
+        Extracts verified timestamps, intensities (Major/Minor), and descriptions.
+        """
+        jumpscares: List[Dict[str, Any]] = []
+        item_blocks = re.split(r'\n(?=\d+\.\s+\d+\s+\d{1,2}:\d{2})', markdown_text)
+        for block in item_blocks:
+            m = re.search(r'(\d{1,2}:\d{2}(?::\d{2})?)\s+(Major|Minor)', block, re.IGNORECASE)
+            if m:
+                ts, intensity = m.groups()
+                sec = self._parse_timestamp_to_seconds(ts)
+                desc_match = re.search(r'Credit:\s*\n+[^\n]+\n+([^\n]+)', block)
+                desc = desc_match.group(1).strip() if desc_match else f"Jump scare ({intensity.capitalize()}) at {ts}"
+                if sec and sec > 10 and not any(abs(j["time"] - sec) < 3 for j in jumpscares):
+                    jumpscares.append({
+                        "time": sec,
+                        "intensity": intensity.capitalize(),
+                        "description": desc
+                    })
+
+        if not jumpscares:
+            for m in re.finditer(r'(\d{1,2}:\d{2}(?::\d{2})?)\s*\((major|minor)\)', markdown_text, re.IGNORECASE):
+                ts, intensity = m.groups()
+                sec = self._parse_timestamp_to_seconds(ts)
+                if sec and sec > 10 and not any(abs(j["time"] - sec) < 3 for j in jumpscares):
+                    jumpscares.append({
+                        "time": sec,
+                        "intensity": intensity.capitalize(),
+                        "description": f"Jump scare ({intensity.capitalize()}) at {ts}"
+                    })
+
+        if jumpscares:
+            jumpscares.sort(key=lambda x: x["time"])
+        return jumpscares
+
     async def scrape_whenjumpscare(
         self,
         title: str,
@@ -554,9 +590,26 @@ class JumpscareScraper:
                             except Exception:
                                 pass
 
-                        return jumpscares
-                except Exception:
-                    pass
+                        if jumpscares:
+                            return jumpscares
+                    else:
+                        print(f"[WhenJumpScare] Direct fetch for {url} returned HTTP {resp.status_code}")
+                except Exception as e:
+                    print(f"[WhenJumpScare] Direct fetch error for {url}: {e}")
+
+                # Cloudflare / Datacenter IP bypass: Fallback to Jina AI Reader
+                if not jumpscares:
+                    jina_url = f"https://r.jina.ai/{url}"
+                    print(f"[WhenJumpScare] Trying Cloudflare-bypass via Jina Reader: {jina_url}")
+                    try:
+                        jina_resp = await client.get(jina_url, timeout=12.0)
+                        if jina_resp.status_code == 200:
+                            jina_scares = self._parse_jina_whenjumpscare(jina_resp.text)
+                            if jina_scares:
+                                print(f"[WhenJumpScare] Extracted {len(jina_scares)} jumpscares via Jina Reader from {url}!")
+                                return jina_scares
+                    except Exception as e:
+                        print(f"[WhenJumpScare] Jina Reader error for {url}: {e}")
 
         return jumpscares
 

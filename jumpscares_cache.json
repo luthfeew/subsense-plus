@@ -244,5 +244,71 @@
         "description": "Scare at 01:12:03"
       }
     ]
+  },
+  "tt35538033": {
+    "title": "Resident Evil",
+    "year": "2026",
+    "jumpscares": [
+      {
+        "time": 400.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 00:06:40"
+      },
+      {
+        "time": 889.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 00:14:49"
+      },
+      {
+        "time": 951.0,
+        "intensity": "Major",
+        "description": "Jump scare (Major) at 00:15:51"
+      },
+      {
+        "time": 1070.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 00:17:50"
+      },
+      {
+        "time": 1430.0,
+        "intensity": "Major",
+        "description": "Jump scare (Major) at 00:23:50"
+      },
+      {
+        "time": 1459.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 00:24:19"
+      },
+      {
+        "time": 1821.0,
+        "intensity": "Major",
+        "description": "Jump scare (Major) at 00:30:21"
+      },
+      {
+        "time": 2068.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 00:34:28"
+      },
+      {
+        "time": 2434.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 00:40:34"
+      },
+      {
+        "time": 3095.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 00:51:35"
+      },
+      {
+        "time": 3121.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 00:52:01"
+      },
+      {
+        "time": 4538.0,
+        "intensity": "Minor",
+        "description": "Jump scare (Minor) at 01:15:38"
+      }
+    ]
   }
 }
