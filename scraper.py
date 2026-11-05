@@ -411,7 +411,86 @@ class JumpscareScraper:
                         soup = BeautifulSoup(resp.text, "html.parser")
                         print(f"[WhenJumpScare] Successfully opened page: {url}")
 
-                        # 1. Check for Next.js __NEXT_DATA__ JSON props
+                        # 1. Parse modern WhenJumpScare Schema.org JSON-LD (ItemList & FAQPage)
+                        for script in soup.find_all("script", type="application/ld+json"):
+                            if not script.string:
+                                continue
+                            try:
+                                ld_data = json.loads(script.string)
+                                if isinstance(ld_data, dict):
+                                    # Pattern A: ItemList (Standard jumpscare list)
+                                    if ld_data.get("@type") == "ItemList":
+                                        for item in ld_data.get("itemListElement", []):
+                                            name = item.get("name", "")
+                                            match = re.search(r'(major|minor)\s+jumpscare\s+at\s+(\d{1,2}:\d{2}(?::\d{2})?)', name, re.IGNORECASE)
+                                            if match:
+                                                intensity, ts = match.groups()
+                                                sec = self._parse_timestamp_to_seconds(ts)
+                                                if sec and sec > 10 and not any(abs(j["time"] - sec) < 3 for j in jumpscares):
+                                                    jumpscares.append({
+                                                        "time": sec,
+                                                        "intensity": intensity.capitalize(),
+                                                        "description": f"Jump scare ({intensity.capitalize()}) at {ts}"
+                                                    })
+
+                                    # Pattern B: FAQPage (Alternative schema format)
+                                    elif ld_data.get("@type") == "FAQPage":
+                                        for q in ld_data.get("mainEntity", []):
+                                            ans = q.get("acceptedAnswer", {}).get("text", "")
+                                            for match in re.finditer(r'(\d{1,2}:\d{2}(?::\d{2})?)\s*\((major|minor)\)', ans, re.IGNORECASE):
+                                                ts, intensity = match.groups()
+                                                sec = self._parse_timestamp_to_seconds(ts)
+                                                if sec and sec > 10 and not any(abs(j["time"] - sec) < 3 for j in jumpscares):
+                                                    jumpscares.append({
+                                                        "time": sec,
+                                                        "intensity": intensity.capitalize(),
+                                                        "description": f"Jump scare ({intensity.capitalize()}) at {ts}"
+                                                    })
+                            except Exception:
+                                pass
+
+                        if jumpscares:
+                            jumpscares.sort(key=lambda x: x["time"])
+                            print(f"[WhenJumpScare] Extracted {len(jumpscares)} jumpscares via JSON-LD from {url}!")
+                            return jumpscares
+
+                        # 2. Check for <time> tags in scare sheet
+                        for time_el in soup.find_all("time"):
+                            ts_text = time_el.get_text().strip()
+                            if re.match(r'^\d{1,2}:\d{2}(?::\d{2})?$', ts_text):
+                                sec = self._parse_timestamp_to_seconds(ts_text)
+                                parent_box = time_el.find_parent("div") or time_el.parent
+                                box_text = parent_box.get_text() if parent_box else ""
+                                intensity = "Major" if "major" in box_text.lower() else "Minor"
+                                if sec and sec > 10 and not any(abs(j["time"] - sec) < 3 for j in jumpscares):
+                                    jumpscares.append({
+                                        "time": sec,
+                                        "intensity": intensity,
+                                        "description": f"Jump scare ({intensity}) at {ts_text}"
+                                    })
+
+                        if jumpscares:
+                            jumpscares.sort(key=lambda x: x["time"])
+                            print(f"[WhenJumpScare] Extracted {len(jumpscares)} jumpscares via <time> elements from {url}!")
+                            return jumpscares
+
+                        # 3. Check for details/text list e.g. "00:06:40 (minor)"
+                        for match in re.finditer(r'(\d{1,2}:\d{2}(?::\d{2})?)\s*\((major|minor)\)', resp.text, re.IGNORECASE):
+                            ts, intensity = match.groups()
+                            sec = self._parse_timestamp_to_seconds(ts)
+                            if sec and sec > 10 and not any(abs(j["time"] - sec) < 3 for j in jumpscares):
+                                jumpscares.append({
+                                    "time": sec,
+                                    "intensity": intensity.capitalize(),
+                                    "description": f"Jump scare ({intensity.capitalize()}) at {ts}"
+                                })
+
+                        if jumpscares:
+                            jumpscares.sort(key=lambda x: x["time"])
+                            print(f"[WhenJumpScare] Extracted {len(jumpscares)} jumpscares via text patterns from {url}!")
+                            return jumpscares
+
+                        # 4. Legacy Check: Next.js __NEXT_DATA__ JSON props
                         next_script = soup.find("script", id="__NEXT_DATA__")
                         if next_script and next_script.string:
                             try:
@@ -449,7 +528,7 @@ class JumpscareScraper:
                             except Exception:
                                 pass
 
-                        # 2. Check for Warning Subtitle (.SRT) link
+                        # 5. Legacy Check: Warning Subtitle (.SRT) link
                         srt_link_elem = soup.find("a", href=re.compile(r'\.srt', re.IGNORECASE))
                         if srt_link_elem and srt_link_elem.get("href"):
                             srt_url = urllib.parse.urljoin(url, srt_link_elem["href"])
@@ -461,7 +540,6 @@ class JumpscareScraper:
                                         ts_match = re.search(r'(\d{2}:\d{2}:\d{2}(?:[,\.]\d{1,3})?)\s*-->', line)
                                         if ts_match:
                                             sec = self._parse_timestamp_to_seconds(ts_match.group(1).replace(',', '.'))
-                                            # Subtitles are timed ~5s ahead, adjust to actual scare time
                                             actual_sec = sec + 5.0
                                             if not any(abs(j["time"] - actual_sec) < 5 for j in jumpscares):
                                                 jumpscares.append({
@@ -476,24 +554,7 @@ class JumpscareScraper:
                             except Exception:
                                 pass
 
-                        # 3. Parse "The scare sheet" table in HTML DOM
-                        page_text = soup.get_text(separator="\n")
-                        for match in scare_row_pattern.finditer(page_text):
-                            ts_str, intensity_str = match.groups()
-                            sec = self._parse_timestamp_to_seconds(ts_str)
-                            if sec and sec > 10:
-                                intensity = intensity_str.capitalize()
-                                if not any(abs(j["time"] - sec) < 5 for j in jumpscares):
-                                    jumpscares.append({
-                                        "time": sec,
-                                        "intensity": intensity,
-                                        "description": f"Jump scare ({intensity}) at {ts_str}"
-                                    })
-
-                        if jumpscares:
-                            jumpscares.sort(key=lambda x: x["time"])
-                            print(f"[WhenJumpScare] Extracted {len(jumpscares)} jumpscares from {url}!")
-                            return jumpscares
+                        return jumpscares
                 except Exception:
                     pass
 
