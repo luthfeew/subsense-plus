@@ -46,7 +46,7 @@ DEFAULT_SUBSENSE_BASE = "https://subsense.elfhosted.com"
 
 MANIFEST = {
     "id": "org.subsense.plus",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "name": "SubSense+",
     "description": "Enhanced SubSense subtitles with smart viewing enhancements, jumpscare alerts, and more.",
     "resources": [
@@ -298,6 +298,40 @@ async def get_subtitles_custom(user_config: str, media_type: str, media_id: str,
 async def get_subtitles_extra_custom(user_config: str, media_type: str, media_id: str, extra: str, request: Request):
     return await handle_subtitles_request(user_config, media_type, media_id, extra, request)
 
+
+async def fetch_subtitle_content(url: str) -> Optional[str]:
+    """
+    Downloads subtitle content from upstream with Chrome TLS impersonation (curl_cffi)
+    to bypass Cloudflare WAF on dl.opensubtitles.org and other protected subtitle providers.
+    Falls back to httpx if curl_cffi encounters an issue.
+    """
+    # 1. Try curl_cffi with Chrome 120 TLS fingerprint (bypasses Cloudflare on dl.opensubtitles.org)
+    try:
+        from curl_cffi.requests import AsyncSession
+        async with AsyncSession(impersonate="chrome120") as s:
+            r = await s.get(url, timeout=12.0)
+            if r.status_code == 200 and r.text and len(r.text.strip()) > 10:
+                if "<html" not in r.text[:100].lower() or "WEBVTT" in r.text[:50]:
+                    return r.text
+                print(f"[Injector] curl_cffi received HTML/challenge instead of subtitle from {url}")
+            else:
+                print(f"[Injector] curl_cffi returned HTTP {r.status_code} for {url}")
+    except Exception as e:
+        print(f"[Injector] curl_cffi error fetching subtitle: {e}")
+
+    # 2. Fallback to httpx
+    try:
+        async with httpx.AsyncClient(timeout=12.0, follow_redirects=True, headers=BROWSER_HEADERS) as client:
+            resp = await client.get(url)
+            if resp.status_code == 200 and resp.text.strip():
+                if "<html" not in resp.text[:100].lower() or "WEBVTT" in resp.text[:50]:
+                    return resp.text
+            print(f"[Injector] httpx returned HTTP {resp.status_code} for {url}")
+    except Exception as e:
+        print(f"[Injector] httpx error fetching subtitle: {e}")
+
+    return None
+
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept": "*/*",
@@ -321,18 +355,10 @@ async def proxy_subtitle(
     actual_sub_url = urllib.parse.unquote(sub_url)
     print(f"[Injector] Downloading subtitle from {actual_sub_url} for IMDb {imdb}...")
 
-    original_content = None
-    async with httpx.AsyncClient(timeout=12.0, follow_redirects=True, headers=BROWSER_HEADERS) as client:
-        try:
-            resp = await client.get(actual_sub_url)
-            if resp.status_code == 200 and resp.text.strip():
-                original_content = resp.text
-            else:
-                print(f"[Injector] Upstream returned HTTP {resp.status_code}. Seamlessly redirecting client to original subtitle.")
-                return RedirectResponse(url=actual_sub_url, status_code=307)
-        except Exception as e:
-            print(f"[Injector] Error fetching original subtitle: {e}. Seamlessly redirecting client to original subtitle.")
-            return RedirectResponse(url=actual_sub_url, status_code=307)
+    original_content = await fetch_subtitle_content(actual_sub_url)
+    if not original_content:
+        print(f"[Injector] Upstream could not be fetched. Seamlessly redirecting client to original subtitle.")
+        return RedirectResponse(url=actual_sub_url, status_code=307)
 
     try:
         jumpscares = await asyncio.wait_for(

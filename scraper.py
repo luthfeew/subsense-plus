@@ -439,7 +439,18 @@ class JumpscareScraper:
             re.IGNORECASE
         )
 
-        async with httpx.AsyncClient(timeout=10.0, headers=headers, follow_redirects=True) as client:
+        try:
+            from curl_cffi.requests import AsyncSession as CffiSession
+            use_cffi = True
+        except ImportError:
+            use_cffi = False
+
+        if use_cffi:
+            client_ctx = CffiSession(impersonate="chrome120")
+        else:
+            client_ctx = httpx.AsyncClient(timeout=10.0, headers=headers, follow_redirects=True)
+
+        async with client_ctx as client:
             for url in unique_urls:
                 try:
                     resp = await client.get(url)
@@ -656,7 +667,18 @@ class JumpscareScraper:
             re.IGNORECASE
         )
 
-        async with httpx.AsyncClient(timeout=10.0, headers=headers, follow_redirects=True) as client:
+        try:
+            from curl_cffi.requests import AsyncSession as CffiSession
+            use_cffi = True
+        except ImportError:
+            use_cffi = False
+
+        if use_cffi:
+            client_ctx = CffiSession(impersonate="chrome120")
+        else:
+            client_ctx = httpx.AsyncClient(timeout=10.0, headers=headers, follow_redirects=True)
+
+        async with client_ctx as client:
             for url in candidate_urls:
                 try:
                     resp = await client.get(url)
