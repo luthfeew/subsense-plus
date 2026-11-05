@@ -46,7 +46,7 @@ DEFAULT_SUBSENSE_BASE = "https://subsense.elfhosted.com"
 
 MANIFEST = {
     "id": "org.subsense.plus",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "name": "SubSense+",
     "description": "Enhanced SubSense subtitles with smart viewing enhancements, jumpscare alerts, and more.",
     "resources": [
@@ -114,6 +114,33 @@ async def configure(request: Request):
         with open(CONFIGURE_HTML_PATH, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     return HTMLResponse(content="<h1>Configure HTML not found</h1>", status_code=404)
+
+
+@app.get("/api/test-download")
+async def test_download(url: str):
+    results = {}
+    headers_list = [
+        ("browser", BROWSER_HEADERS),
+        ("stremio", {"User-Agent": "Stremio/4.4.168", "Accept": "*/*"}),
+        ("okhttp", {"User-Agent": "okhttp/4.9.0", "Accept": "*/*"}),
+        ("exoplayer", {"User-Agent": "ExoPlayer/2.18.1", "Accept": "*/*"}),
+        ("curl", {"User-Agent": "curl/8.4.0", "Accept": "*/*"}),
+        ("empty", {}),
+    ]
+    for name, hdrs in headers_list:
+        try:
+            async with httpx.AsyncClient(timeout=8.0, follow_redirects=True, headers=hdrs) as client:
+                r = await client.get(url)
+                results[name] = {
+                    "status": r.status_code,
+                    "length": len(r.text),
+                    "server": r.headers.get("server", ""),
+                    "cf_mitigated": r.headers.get("cf-mitigated", ""),
+                    "sample": r.text[:150]
+                }
+        except Exception as e:
+            results[name] = {"error": str(e)}
+    return results
 
 @app.get("/api/validate-subsense")
 async def validate_subsense(url: str):
