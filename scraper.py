@@ -95,6 +95,7 @@ class JumpscareScraper:
         self.no_cache = no_cache or os.environ.get("NO_CACHE", "0") == "1"
         self.verbose = verbose or os.environ.get("VERBOSE", "0") == "1"
         self.cache: Dict[str, Any] = self._load_cache()
+        self.last_status: str = "Success"
 
     def _format_seconds(self, seconds: float) -> str:
         seconds = max(0.0, float(seconds))
@@ -737,6 +738,7 @@ class JumpscareScraper:
         Main method to get jumpscares: checks cache -> Cinemeta -> WhenJumpScare -> NotScare.me fallback.
         """
         clean_id = imdb_id.split(':')[0]
+        self.last_status = "Success"
         
         # 1. Check local cache (skipped if --no-cache is set)
         if not self.no_cache and clean_id in self.cache:
@@ -753,6 +755,7 @@ class JumpscareScraper:
         meta = await self.get_metadata_from_cinemeta(media_type, clean_id)
         if not meta or not meta.get("title"):
             print(f"[Scraper] Could not find metadata for {clean_id}")
+            self.last_status = "Error (Metadata)"
             return []
 
         title = meta["title"]

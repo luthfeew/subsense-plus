@@ -1,5 +1,5 @@
 import re
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 def parse_time_to_seconds(time_str: str) -> float:
     """
@@ -100,22 +100,69 @@ def serialize_cues(cues: List[SubtitleCue], is_vtt: bool = False) -> str:
 
     return "".join(output).strip() + "\n"
 
+def inject_status_badge(
+    cues: List[SubtitleCue],
+    status_text: str,
+    start_time: float = 15.0,
+    duration: float = 4.0
+):
+    """
+    Injects a status badge at start_time (default 15.0s, duration 4.0s)
+    without overwriting any existing subtitle dialogue.
+    """
+    if not status_text:
+        return
+
+    end_time = start_time + duration
+    overlapping = [c for c in cues if c.start < end_time and c.end > start_time]
+
+    if not overlapping:
+        cues.append(SubtitleCue(start_time, end_time, status_text))
+    else:
+        for c in overlapping:
+            if status_text not in c.text:
+                c.text = f"{status_text}\n{c.text}"
+        first_cue = min(overlapping, key=lambda c: c.start)
+        if first_cue.start - start_time > 0.8:
+            cues.append(SubtitleCue(start_time, first_cue.start, status_text))
+        last_cue = max(overlapping, key=lambda c: c.end)
+        if end_time - last_cue.end > 0.8:
+            cues.append(SubtitleCue(last_cue.end, end_time, status_text))
+
 def inject_jumpscares(
     subtitle_content: str,
     jumpscares: List[Dict[str, Any]],
     lead_time_seconds: float = 5.0,
-    alert_color: str = "#FFD700"  # Clean subtitle yellow
+    alert_color: str = "#FFD700",  # Clean subtitle yellow
+    status_text: Optional[str] = None,
+    status_start_time: float = 15.0,
+    status_duration: float = 4.0
 ) -> str:
     """
-    Injects jumpscare warning tags into subtitle text without losing existing dialogue.
+    Injects jumpscare warning tags and optional status notice into subtitle text without losing existing dialogue.
+    - jumpscares: list of jumpscare dictionaries with 'time' and 'intensity'.
     - lead_time_seconds: how many seconds before jumpscare the warning appears (default 5.0).
     - alert_color: subtitle text color (default clean yellow #FFD700).
+    - status_text: optional status badge to display at status_start_time (default 15.0s).
     """
-    if not jumpscares or not subtitle_content.strip():
+    if not subtitle_content.strip():
+        return subtitle_content
+
+    if not jumpscares and not status_text:
         return subtitle_content
 
     cues, is_vtt = parse_srt_or_vtt(subtitle_content)
-    
+
+    # 1. Inject status notice at specified second (default 15s)
+    if status_text:
+        inject_status_badge(
+            cues=cues,
+            status_text=status_text,
+            start_time=status_start_time,
+            duration=status_duration
+        )
+
+    # 2. Inject jumpscare warning cues
     for js in jumpscares:
         js_time = float(js.get("time", 0))
         if js_time <= 0:

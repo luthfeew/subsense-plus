@@ -46,7 +46,7 @@ DEFAULT_SUBSENSE_BASE = "https://subsense.elfhosted.com"
 
 MANIFEST = {
     "id": "org.subsense.plus",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "name": "SubSense+",
     "description": "Enhanced SubSense subtitles with smart viewing enhancements, jumpscare alerts, and more.",
     "resources": [
@@ -360,6 +360,8 @@ async def proxy_subtitle(
         print(f"[Injector] Upstream could not be fetched. Seamlessly redirecting client to original subtitle.")
         return RedirectResponse(url=actual_sub_url, status_code=307)
 
+    status = "Success"
+    jumpscares = []
     try:
         jumpscares = await asyncio.wait_for(
             scraper.get_jumpscares_for_id(type, imdb, tmdb_api_key=tmdb_key or None),
@@ -368,14 +370,36 @@ async def proxy_subtitle(
         if filter == "major":
             jumpscares = [j for j in jumpscares if j.get("intensity", "").lower() == "major"]
 
-        print(f"[Injector] Injecting {len(jumpscares)} jumpscare warnings with {lead}s lead time...")
+        scraper_status = getattr(scraper, "last_status", "Success")
+        if not jumpscares and "Error" in scraper_status:
+            status = scraper_status
+        else:
+            status = "Success"
+    except asyncio.TimeoutError:
+        status = "Timeout"
+    except Exception as e:
+        err_msg = str(e)
+        if "403" in err_msg:
+            status = "Error 403"
+        else:
+            status = "Error"
+
+    count = len(jumpscares)
+    color = "#FFD700" if status == "Success" else "#ef4444"
+    status_text = f'<font color="{color}"><b>SubSense+ | Status: {status} | {count} Jumpscares</b></font>'
+
+    print(f"[Injector] Status: {status}, Injecting {count} jumpscare warnings with {lead}s lead time...")
+    try:
         modified_content = inject_jumpscares(
             subtitle_content=original_content,
             jumpscares=jumpscares,
-            lead_time_seconds=lead
+            lead_time_seconds=lead,
+            status_text=status_text,
+            status_start_time=15.0,
+            status_duration=4.0
         )
     except Exception as e:
-        print(f"[Injector] Error or timeout during warning injection ({e}), serving original subtitle directly.")
+        print(f"[Injector] Error injecting warnings ({e}), serving original subtitle directly.")
         modified_content = original_content
 
     is_vtt = "WEBVTT" in modified_content[:50]
